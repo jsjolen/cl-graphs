@@ -1,0 +1,14 @@
+(in-package :cl-graphs)
+
+(defstruct (queue (:constructor %make-queue))
+  backing-array
+  start end
+  )
+
+(defun make-queue (&optional (initial-size 25))
+  (%make-queue
+   :backing-array
+   (make-array initial-size :adjustable t)
+   :start 0 :end 0))
+(defun enqueue (v q))
+(defun dequeue (v q))

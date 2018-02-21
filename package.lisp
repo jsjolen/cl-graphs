@@ -1,4 +1,4 @@
 ;;;; package.lisp
 
 (defpackage #:cl-graphs
-  (:use #:cl))
+  (:use #:cl #:trivia #:queues))

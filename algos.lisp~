@@ -1,0 +1,49 @@
+(in-package :cl-graphs)
+#|
+https://github.com/yourbasic/graph
+breadth-first DONE
+depth-first search, DONE
+topological ordering,
+strongly and weakly connected components,
+bipartion,
+shortest paths,
+maximum flow,
+Euler walks,
+minimum spanning trees and
+Dijkstra's
+|#
+;; Would be nice if you can:
+; 1. trace paths (return path found)
+; 2. map paths (funcall every vertex visited)
+; 3. search for element
+
+(defmacro defsearch (name constructor taker adder empty?)
+  `(defun ,name (looking-for graph start)
+    (let ((stack (,constructor start))
+	   (et (make-hash-table :test (graph-test graph))))
+       (flet ((seen? (e)
+		(gethash e et))
+	      (see (e)
+		(setf (gethash e et) t)))
+	 (loop while (not (,empty? stack)) do
+	      (let ((vert (,taker stack)))
+		(cond
+		  ((funcall (graph-test graph) vert looking-for)
+		   t)
+		  ((not (seen? vert))
+		   (see vert)
+		   (map nil
+			#'(lambda (v)
+			    (,adder v stack))
+			(edges vert graph)))))))
+       nil)))
+
+(defsearch depth-first-search list pop push null)
+(defsearch breadth-first-search
+    (lambda (e)
+      (let ((q (make-queue :simple-queue :minimum-size 10)))
+	(qpush q e)))
+  qpop
+  (lambda (y x)
+    (funcall #'qpush x y))
+  (lambda (q) (= (qsize q) 0)))
