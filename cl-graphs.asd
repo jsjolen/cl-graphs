@@ -13,7 +13,8 @@
   :depends-on (:trivia
 	       :alexandria
 	       :queues
-	       :cl-annot)
+	       :cl-annot
+	       :prove)
    :in-order-to ((test-op (test-op cl-graphs-test))))
 
 (asdf:defsystem #:cl-graphs-tests

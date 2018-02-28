@@ -59,38 +59,46 @@
 	(:ltr
 	 (add-e1))
 	(:rtl
-	 (add-e2))))))
+	 (add-e2)))))
+  graph)
 
 @export
 (defun remove-edge (left right graph &optional (direction :any))
   (let ((les (gelt left graph))
 	(res (gelt right graph)))
-    (macrolet ((rem-form (from dir edge-name)
-		 `(remove ,edge-name ,from
-			   :test (lambda (e1 e2)
-				   (etypecase e1
-				     (edge
-				      (and (eq e2 (edge-friend e1))
-					   (eq ,dir (edge-direction e1))))
-				     (symbol
-				      (and (eq e1 (edge-friend e2))
-					   (eq ,dir (edge-direction e2)))))))))
+    (flet ((remove-it (from dir edge-name)
+		(remove edge-name from
+			:test (lambda (e1 e2)				
+				(etypecase e1
+				  (edge
+				   (and (eq e2 (edge-friend e1))
+					(eq dir (edge-direction e1))))
+				  (symbol
+				   (and (eq e1 (edge-friend e2))
+					(eq dir (edge-direction e2)))))))))
       (flet ((remove-ltr ()
 	       (setf (gelt left graph)
-		     (rem-form les :ltr right)))
+		     (remove-it les :ltr right)))
 	     (remove-rtl ()
 	       (setf (gelt right graph)
-		     (rem-form res :rtl left))))
+		     (remove-it res :rtl left)))
+	     (remove-none ()
+	       (setf (Gelt right graph)
+		     (remove-it res :none left))
+	       (setf (gelt left graph)
+		     (remove-it les :none right))))
 	(match direction
 	  (:any
 	   (remove-ltr)
-	   (remove-rtl))
+	   (remove-rtl)
+	   (remove-none))
 	  (:ltr
 	   (remove-ltr))
 	  (:rtl
 	   (remove-rtl))
 	  (:none
-	   (remove-ltr) (remove-rtl)))))))
+	   (remove-none))))))
+  graph)
 @export
 (defun -> (from to graph &optional (weight 0))
   (add-edge from to graph weight 'ltr))

@@ -1,4 +1,5 @@
 (in-package :cl-graphs)
+(annot:enable-annot-syntax)
 #|
 https://github.com/yourbasic/graph
 breadth-first DONE
@@ -19,28 +20,31 @@ Dijkstra's
 
 (defmacro defsearch (name constructor taker adder empty?)
   `(defun ,name (looking-for graph start)
-     (let ((stack (,constructor start))
+     (let ((container (,constructor start))
 	   (vt (make-hash-table :test (graph-test graph))))
        (flet ((seen? (v)
 		(gethash v vt))
 	      (see (v lv)
 		(setf (gethash v vt) lv)))
 	 (let (last-vert vert)
-	   (loop while (not (,empty? stack)) do)
-	   (setf last-vert vert
-		 vert (,taker stack))
-	   (cond
-	     ((funcall (graph-test graph) vert looking-for)
-	      (values t vt))
-	     ((not (seen? vert))
-	      (see vert last-vert)
-	      (map nil
-		   #'(lambda (v)
-		       (,adder v stack))
-		   (edges vert graph))))))))
-  nil)
+	   (loop while (not (,empty? container)) do
+		(setf last-vert vert
+		      vert (,taker container))
+		(cond
+		  ((funcall (graph-test graph) vert looking-for)
+		   (see vert last-vert)
+		   (return-from ,name (values t vt)))
+		  ((not (seen? vert))
+		   (see vert last-vert)
+		   (map nil
+			#'(lambda (e)
+			    (,adder (edge-friend e) container))
+			(edges vert graph))))))
+	 (values nil vt)))))
 
+@export
 (defsearch depth-first-search list pop push null)
+@export
 (defsearch breadth-first-search
     (lambda (e)
       (let ((q (make-queue :simple-queue :minimum-size 10)))
@@ -61,13 +65,15 @@ Dijkstra's
 		(nreverse (cons v acc))
 		(rec (gethash v table) (cons v acc)))))
        (rec to '())))))
-(match 1 ((guard x (eql x 2)) t))
+
 (macrolet ((defpath (name fn)
 	     `(defun ,name (looking-for graph start)
 		(multiple-value-bind (found? table)
 		    (,fn looking-for graph start)
 		  (if found?
-		      (path looking-for start table (graph-test graph))
+		      (path start looking-for table (graph-test graph))
 		      (path nil nil nil (graph-test graph)))))))
+  @export
   (defpath depth-first-path depth-first-search)
+  @export
   (defpath breadth-first-path breadth-first-search))
